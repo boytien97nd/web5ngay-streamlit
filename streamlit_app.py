@@ -1,5 +1,4 @@
 import streamlit as st
-from youtube_transcript_api import YouTubeTranscriptApi
 import openai
 from gtts import gTTS
 import os
@@ -8,16 +7,10 @@ import os
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 st.title("🧠 Tạo Kịch Bản & Giọng Đọc Phong Cách Web5ngay")
-st.markdown("Từ link video YouTube (ví dụ Mark Tilbury), tạo kịch bản truyền cảm hứng + giọng đọc tiếng Việt")
+st.markdown("Dán nội dung transcript tiếng Anh từ video YouTube (ví dụ Mark Tilbury), hệ thống sẽ tạo script Web5ngay và giọng đọc tiếng Việt")
 
-video_url = st.text_input("Nhập link video YouTube:")
+input_text = st.text_area("📋 Dán nội dung transcript tiếng Anh vào đây:", height=300)
 run_button = st.button("Tạo nội dung")
-
-@st.cache_data
-def get_transcript(video_id):
-    transcript = YouTubeTranscriptApi.get_transcript(video_id)
-    text = " ".join([item['text'] for item in transcript])
-    return text
 
 def rewrite_script(text):
     prompt = f"""
@@ -35,14 +28,10 @@ def generate_voice(text, filename="voice.mp3"):
     tts.save(filename)
     return filename
 
-if run_button and video_url:
+if run_button and input_text:
     try:
-        video_id = video_url.split("v=")[-1].split("&")[0]
-        with st.spinner("📄 Đang lấy transcript..."):
-            raw_text = get_transcript(video_id)
-
         with st.spinner("✍️ Đang chuyển thể sang phong cách Web5ngay..."):
-            viet_text = rewrite_script(raw_text)
+            viet_text = rewrite_script(input_text)
             st.text_area("📜 Kịch bản tiếng Việt:", viet_text, height=300)
 
         with st.spinner("🔊 Đang tạo giọng đọc..."):
@@ -53,4 +42,5 @@ if run_button and video_url:
             st.download_button("📥 Tải file giọng đọc", f, file_name="web5ngay_voice.mp3")
 
     except Exception as e:
-        st.error(f"❌ Lỗi: {e}")
+        st.error("❌ Có lỗi xảy ra khi xử lý nội dung. Hãy đảm bảo bạn đã dán transcript tiếng Anh hợp lệ và OpenAI API key của bạn vẫn hoạt động. Chi tiết lỗi:")
+        st.code(str(e))
